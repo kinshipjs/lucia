@@ -1,0 +1,48 @@
+{
+    "name": "@kinshipjs/lucia",
+    "version": "0.0.6-development",
+    "homepage": "https://github.com/kinshipjs/lucia",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/kinshipjs/lucia"
+    },
+    "description": "Lucia Auth adapter for the Kinship ORM library.",
+    "type": "module",
+    "module": "./dist/index.js",
+    "types": "./dist/types/index.d.ts",
+    "scripts": {
+        "clean": "del /S /Q .\\dist",
+        "build": "npm run test && npm run clean && npm run build:source && npm run build:types",
+        "build:source": "tsup",
+        "build:types": "tsc",
+        "test": "node ./test/test.js",
+        "prepack": "npm run build"
+    },
+    "keywords": [
+        "kinship",
+        "lucia",
+        "typescript",
+        "auth"
+    ],
+    "author": "Travis Zuleger",
+    "license": "(MIT OR Apache-2.0)",
+    "dependencies": {
+        "@kinshipjs/core": "^0.0.12-development",
+        "@kinshipjs/json": "^0.0.4",
+        "lucia": "^2.4.0"
+    },
+    "devDependencies": {
+        "@lucia-auth/adapter-test": "^4.1.0",
+        "@types/node": "^20.3.1",
+        "crypto": "^1.0.1",
+        "dotenv": "^16.0.3",
+        "tsup": "^7.2.0",
+        "typescript": "^4.9.4"
+    },
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/types/index.d.ts"
+        }
+    }
+}
