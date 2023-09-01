@@ -182,11 +182,7 @@ const sessions = new KinshipContext(connection, "Session", { disableSafeDeleteMo
 /** @type {KinshipContext<Key>} */
 const keys = new KinshipContext(connection, "Key", { disableSafeDeleteMode: true, disableSafeUpdateMode: false });
 
-const adapter = kinshipLuciaAdapter({
-    auth_key: keys,
-    auth_session: sessions,
-    auth_user: users
-})(LuciaError);
+const adapter = kinshipLuciaAdapter(keys, sessions, users)(LuciaError);
 
 /**
  * @template {import('@lucia-auth/adapter-test').TestUserSchema

@@ -1,25 +1,6 @@
 //@ts-check
-
+import { transaction } from '@kinshipjs/core';
 import { LuciaError } from 'lucia';
-
-/** @template T @typedef {T extends infer U ? {[K in keyof U]: U[K] } : never} FriendlyType */
-
-/**
- * Object model that contains a reference to each context that must be used with the `lucia-auth` library.
- * @template {object} TUser
- * Model represented by the `auth_user` context.
- * @template {object} TSession
- * Model represented by the `auth_session` context.
- * @template {object} TKey
- * Model represented by the `auth_key` context.
- * @typedef {object} AuthTables
- * @prop {import('@kinshipjs/core').KinshipContext<TUser>} auth_user
- * Context connected to a table for User objects.
- * @prop {import('@kinshipjs/core').KinshipContext<TSession>} auth_session
- * Context connected to a table for Session objects.
- * @prop {import('@kinshipjs/core').KinshipContext<TKey>} auth_key 
- * Context connected to a table for Provider Key objects.
- */
 
 /**
  * Object model that contains a map from the expected columns for a User object in `lucia-auth` to the actual column name represented in your table.
@@ -63,6 +44,11 @@ import { LuciaError } from 'lucia';
  */
 
 /**
+ * @template {object} T
+ * @typedef {{[K in keyof T as NonNullable<T[K]> extends string|number|boolean|bigint|Date ? K : never]-?: K}} CopyKeyToProperty
+ */
+
+/**
  * (model: {[K in keyof TUser]-?: TUser[K] extends object|undefined 
  *     ? TUser[K] 
  *     : TUser[K] extends (infer U)[]|undefined 
@@ -71,11 +57,7 @@ import { LuciaError } from 'lucia';
  * @template {object} T
  * @template TColumnNames
  * @callback ToColumnNames
- * @param {{[K in keyof T]-?: NonNullable<T[K]> extends (infer U)[] 
- *   ? U
- * : NonNullable<T[K]> extends object
- *   ? T[K]
- * : K}} model
+ * @param {{[K in keyof T as NonNullable<T[K]> extends string|number|boolean|bigint|Date ? K : never]-?: K}} model
  * @returns {TColumnNames}
  */
 
@@ -87,25 +69,6 @@ const proxy = new Proxy(/** @type {any} */ ({}), {
 });
 
 /**
- * @param {any} object 
- * @param {any} $$keys 
- * @param {boolean} maintainOldProperties
- * @returns {any}
- */
-function remapProperties(object, $$keys, maintainOldProperties=false) {
-    for(const key in $$keys) {
-        const realColumnName = $$keys[key];
-        if(key in object) {
-            object[realColumnName] = object[key];
-            if(key !== realColumnName) {
-                delete object[key];
-            }
-        }
-    }
-    return object;
-}
-
-/**
  * Adapter for the [lucia-auth](https://lucia-auth.com/) library for [MyORM](https://myorm.dev) contexts.
  * @template {object} TUser
  * Model represented by the `auth_user` context.
@@ -113,9 +76,12 @@ function remapProperties(object, $$keys, maintainOldProperties=false) {
  * Model represented by the `auth_session` context.
  * @template {object} TKey
  * Model represented by the `auth_key` context.
- * @param {AuthTables<TUser, TSession, TKey>} contexts
- * Object containing properties for the expected tables in `lucia-auth` (auth_user, auth_session, auth_key) 
- * in which the value expects to be the respective `MyORMContext` object that connects to the appropriate and respective tables.
+ * @param {import('@kinshipjs/core').KinshipContext<TKey>} auth_key
+ * Context representing the table connected to your users.
+ * @param {import('@kinshipjs/core').KinshipContext<TSession>} auth_session
+ * Context representing the table connected to your sessions.
+ * @param {import('@kinshipjs/core').KinshipContext<TUser>} auth_user
+ * Context representing the table connected to your provider keys.
  * @param {{ 
  *   auth_user: ToColumnNames<TUser, AuthUserColumnNames<TUser>>, 
  *   auth_session: ToColumnNames<TSession, AuthSessionColumnNames<TSession>>, 
@@ -127,11 +93,7 @@ function remapProperties(object, $$keys, maintainOldProperties=false) {
  * @returns {(E: import('lucia').LuciaErrorConstructor) => import('lucia').Adapter}
  * `lucia-auth` adapter for usage within `lucia`.
  */
-export const adapter = ({ 
-    auth_user, 
-    auth_session, 
-    auth_key 
-}, { 
+export const adapter = (auth_key, auth_session, auth_user, { 
     auth_user: $auth_user, 
     auth_session: $auth_session, 
     auth_key: $auth_key 
@@ -194,9 +156,8 @@ export const adapter = ({
         },
         setSession: async (session) => {
             await userIdCheck(auth_user, $$auth_user.id, session.user_id);
-            const newSession = remapProperties(session, $$auth_session, true);
             try {
-                await auth_session.insert(newSession);
+                await auth_session.insert(mapSession(session, $$auth_session));
             } catch(err) {
                 throw new LuciaError('AUTH_INVALID_SESSION_ID');
             }
@@ -221,31 +182,15 @@ export const adapter = ({
             return user ?? null;
         },
         setUser: async (user, key) => {
-            if(key) {
-                const count = await auth_key
-                    //@ts-ignore
-                    .where(m => m[$$auth_key.id].equals(key.id))
-                    .count();
-                if(count > 0) {
-                    throw new LuciaError('AUTH_DUPLICATE_KEY_ID');
-                }
-            }
             try {
-                const [insertedUser] = await auth_user.insert(user);
+                await transaction({ auth_key, auth_user }).execute(async ({ auth_key, auth_user }) => {
+                    await auth_user.insert(mapUser(user, $$auth_user));
+                    if(key) {
+                        await auth_key.insert(mapKey(key, $$auth_key));
+                    }
+                });
             } catch(err) {
                 throw new LuciaError('AUTH_DUPLICATE_KEY_ID');
-            }
-            if(key) {
-                /** @type {any} */
-                const newKey = {};
-                for(const k in $$auth_key) {
-                    const realColumnName = $$auth_key[/** @type {keyof typeof $$auth_key} */(k)];
-                    if(k in key) {
-                        newKey[realColumnName] = /** @type {any} */ (key)[k];
-                    }
-                }
-                
-                await auth_key.insert(newKey);
             }
         },
         updateUser: async (userId, partialUser) => {
@@ -283,16 +228,9 @@ export const adapter = ({
         },
         setKey: async (key) => {
             await userIdCheck(auth_user, $$auth_user.id, key.user_id);
-            /** @type {any} */
-            const newKey = {};
-            for(const k in $$auth_key) {
-                const realColumnName = $$auth_key[/** @type {keyof typeof $$auth_key} */(k)];
-                if(k in key) {
-                    newKey[realColumnName] = /** @type {any} */ (key)[k];
-                }
-            }
+            
             try {
-                await auth_key.insert(newKey);
+                await auth_key.insert(mapKey(key, $$auth_key));
             } catch(err) {
                 throw new LuciaError('AUTH_DUPLICATE_KEY_ID');
             }
@@ -319,6 +257,37 @@ export const adapter = ({
                 .delete();
         }
     });
+}
+
+function mapKey(key, $$auth_key) {
+    return mapProperties(key, $$auth_key, true);
+}
+
+function mapUser(user, $$auth_user) {
+    return mapProperties(user, $$auth_user, true);
+}
+
+function mapSession(session, $$auth_session) {
+    return mapProperties(session, $$auth_session, true);
+}
+
+/**
+ * @param {any} object 
+ * @param {any} $$keys 
+ * @param {boolean} maintainOldProperties
+ * @returns {any}
+ */
+function mapProperties(object, $$keys, maintainOldProperties=false) {
+    for(const key in $$keys) {
+        const realColumnName = $$keys[key];
+        if(key in object) {
+            object[realColumnName] = object[key];
+            if(key !== realColumnName) {
+                delete object[key];
+            }
+        }
+    }
+    return object;
 }
 
 /**
