@@ -1,6 +1,6 @@
 {
     "name": "@kinshipjs/lucia",
-    "version": "0.0.9-development",
+    "version": "0.0.18-development",
     "homepage": "https://github.com/kinshipjs/lucia",
     "repository": {
         "type": "git",
@@ -27,7 +27,7 @@
     "author": "Travis Zuleger",
     "license": "(MIT OR Apache-2.0)",
     "dependencies": {
-        "@kinshipjs/core": "^0.0.17-development",
+        "@kinshipjs/core": "^0.0.26-development",
         "lucia": "^2.4.0"
     },
     "devDependencies": {

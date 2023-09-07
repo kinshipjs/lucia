@@ -15,9 +15,9 @@ const connection = jsonAdapter({
     },
     $schema: {
         User: {
-            id: {
+            Id: {
                 table: 'User',
-                field: 'id',
+                field: 'Id',
                 alias: '',
                 isPrimary: true,
                 isIdentity: false,
@@ -28,9 +28,9 @@ const connection = jsonAdapter({
                 defaultValue: () => undefined,
                 commandAlias: ''
             },
-            username: {
+            Username: {
                 table: 'User',
-                field: 'username',
+                field: 'Username',
                 alias: '',
                 isPrimary: false,
                 isIdentity: false,
@@ -43,9 +43,9 @@ const connection = jsonAdapter({
             },
         },
         Key: {
-            id: {
+            Id: {
                 table: 'Key',
-                field: 'id',
+                field: 'Id',
                 alias: '',
                 isPrimary: true,
                 isIdentity: false,
@@ -56,9 +56,9 @@ const connection = jsonAdapter({
                 defaultValue: () => undefined,
                 commandAlias: ''
             },
-            user_id: {
+            UserId: {
                 table: 'Key',
-                field: 'user_id',
+                field: 'UserId',
                 alias: '',
                 isPrimary: false,
                 isIdentity: false,
@@ -69,9 +69,9 @@ const connection = jsonAdapter({
                 defaultValue: () => undefined,
                 commandAlias: ''
             },
-            hashed_password: {
+            HashedPassword: {
                 table: 'Key',
-                field: 'hashed_password',
+                field: 'HashedPassword',
                 alias: '',
                 isPrimary: false,
                 isIdentity: false,
@@ -84,9 +84,9 @@ const connection = jsonAdapter({
             }
         },
         Session: {
-            id: {
+            Id: {
                 table: 'Session',
-                field: 'id',
+                field: 'Id',
                 alias: '',
                 isPrimary: true,
                 isIdentity: false,
@@ -97,9 +97,9 @@ const connection = jsonAdapter({
                 defaultValue: () => undefined,
                 commandAlias: ''
             },
-            user_id: {
+            UserId: {
                 table: 'Session',
-                field: 'user_id',
+                field: 'UserId',
                 alias: '',
                 isPrimary: false,
                 isIdentity: false,
@@ -110,9 +110,9 @@ const connection = jsonAdapter({
                 defaultValue: () => undefined,
                 commandAlias: ''
             },
-            idle_expires: {
+            IdleExpires: {
                 table: 'Session',
-                field: 'idle_expires',
+                field: 'IdleExpires',
                 alias: '',
                 isPrimary: false,
                 isIdentity: false,
@@ -123,9 +123,9 @@ const connection = jsonAdapter({
                 defaultValue: () => undefined,
                 commandAlias: ''
             },
-            active_expires: {
+            ActiveExpires: {
                 table: 'Session',
-                field: 'active_expires',
+                field: 'ActiveExpires',
                 alias: '',
                 isPrimary: false,
                 isIdentity: false,
@@ -136,9 +136,9 @@ const connection = jsonAdapter({
                 defaultValue: () => undefined,
                 commandAlias: ''
             },
-            country: {
+            Country: {
                 table: 'Session',
-                field: 'country',
+                field: 'Country',
                 alias: '',
                 isPrimary: false,
                 isIdentity: false,
@@ -155,24 +155,24 @@ const connection = jsonAdapter({
 
 /**
  * @typedef {object} User
- * @prop {string} id
- * @prop {string} username
+ * @prop {string} Id
+ * @prop {string} Username
  */
 
 /**
  * @typedef {object} Session
- * @prop {string} id
- * @prop {number} active_expires
- * @prop {number} idle_expires
- * @prop {string} user_id
- * @prop {string} country
+ * @prop {string} Id
+ * @prop {number} ActiveExpires
+ * @prop {number} IdleExpires
+ * @prop {string} UserId
+ * @prop {string} Country
  */
 
 /**
  * @typedef {object} Key
- * @prop {string} id
- * @prop {string?} hashed_password
- * @prop {string} user_id
+ * @prop {string} Id
+ * @prop {string?} HashedPassword
+ * @prop {string} UserId
  */
 
 /** @type {KinshipContext<User>} */
@@ -182,7 +182,32 @@ const sessions = new KinshipContext(connection, "Session", { disableSafeDeleteMo
 /** @type {KinshipContext<Key>} */
 const keys = new KinshipContext(connection, "Key", { disableSafeDeleteMode: true, disableSafeUpdateMode: false });
 
-const adapter = kinshipLuciaAdapter(keys, sessions, users)(LuciaError);
+function onSuccess({cmdRaw, resultsInSqlRowFormat}) {
+    console.log(resultsInSqlRowFormat);
+}
+
+users.onSuccess(onSuccess);
+sessions.onSuccess(onSuccess);
+keys.onSuccess(onSuccess);
+
+const adapter = kinshipLuciaAdapter(keys, sessions, users, {
+    auth_key: m => ({
+        id: m.Id,
+        hashed_password: m.HashedPassword,
+        user_id: m.UserId
+    }),
+    auth_session: m => ({
+        active_expires: m.ActiveExpires,
+        id: m.Id,
+        idle_expires: m.IdleExpires,
+        user_id: m.UserId,
+        country: m.Country
+    }),
+    auth_user: m => ({
+        id: m.Id,
+        username: m.Username
+    })
+})(LuciaError);
 
 /**
  * @template {import('@lucia-auth/adapter-test').TestUserSchema
@@ -197,12 +222,56 @@ function createQueryHandler(ctx, table) {
         get: async () => {
             const results = await ctx.select();
             console.log(`getting from ${table}: `, results);
-            return results;
+            return results.map((/** @type {any} */value) => {
+                let row = {};
+                if(table === 'User') {
+                    row = {
+                        id: value.Id,
+                        username: value.Username
+                    };
+                } else if(table === 'Session') {
+                    row = {
+                        id: value.Id,
+                        active_expires: value.ActiveExpires,
+                        idle_expires: value.IdleExpires,
+                        user_id: value.UserId,
+                        country: value.Country
+                    }
+                } else if(table === 'Key') {
+                    row = {
+                        id: value.Id,
+                        hashed_password: value.HashedPassword,
+                        user_id: value.UserId
+                    }
+                }
+                return row;
+            });
         },
         insert: async (value) => {
-            console.log(`inserting into ${table}: `, value);
-            await ctx.insert(value);
-            console.log(await ctx.select());
+            /** @type {any} */
+            let row = {};
+            if(table === 'User') {
+                row = {
+                    Id: value.id,
+                    Username: value.username
+                };
+            } else if(table === 'Session') {
+                row = {
+                    Id: value.id,
+                    ActiveExpires: value.active_expires,
+                    IdleExpires: value.idle_expires,
+                    UserId: value.user_id,
+                    Country: value.country
+                }
+            } else if(table === 'Key') {
+                row = {
+                    Id: value.id,
+                    HashedPassword: value.hashed_password,
+                    UserId: value.user_id
+                }
+            }
+            console.log(`inserting into ${table}: `, row);
+            await ctx.insert(row);
         },
         clear: async () => {
             console.log(`Truncating ${table}`);

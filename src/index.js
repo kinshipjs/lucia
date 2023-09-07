@@ -166,7 +166,7 @@ export const adapter = (auth_key, auth_session, auth_user, {
             try {
                 await auth_session
                         .where(m => (/** @type {any} */(m))[$$auth_session.id].equals(sessionId)
-                    ).update(() => partialSession);
+                    ).update(() => mapSession(partialSession, $$auth_session));
             } catch(err) {
                 throw new LuciaError('AUTH_INVALID_SESSION_ID');
             }
@@ -197,7 +197,7 @@ export const adapter = (auth_key, auth_session, auth_user, {
             try {
                 await auth_user
                         .where(m => (/** @type {any} */(m))[$$auth_session.id].equals(userId)
-                    ).update(() => partialUser);
+                    ).update(() => mapUser(partialUser, $$auth_user));
             } catch(err) {
                 throw new LuciaError('AUTH_INVALID_USER_ID');
             }
@@ -240,7 +240,7 @@ export const adapter = (auth_key, auth_session, auth_user, {
                 .where(m => (/** @type {any} */(m))[$$auth_key.id]
                     // @ts-ignore .where behaves strangely on untyped contexts.
                     .equals(keyId))
-                .update(() => keySchema);
+                .update(() => mapKey(keySchema, $$auth_key));
         },
         deleteKey: async (keyId) => {
             await auth_key
@@ -260,34 +260,35 @@ export const adapter = (auth_key, auth_session, auth_user, {
 }
 
 function mapKey(key, $$auth_key) {
-    return mapProperties(key, $$auth_key, true);
+    return mapProperties(key, $$auth_key);
 }
 
 function mapUser(user, $$auth_user) {
-    return mapProperties(user, $$auth_user, true);
+    return mapProperties(user, $$auth_user);
 }
 
 function mapSession(session, $$auth_session) {
-    return mapProperties(session, $$auth_session, true);
+    return mapProperties(session, $$auth_session);
 }
 
 /**
  * @param {any} object 
  * @param {any} $$keys 
- * @param {boolean} maintainOldProperties
  * @returns {any}
  */
-function mapProperties(object, $$keys, maintainOldProperties=false) {
+function mapProperties(object, $$keys) {
+    const newObject = { ...object };
     for(const key in $$keys) {
-        const realColumnName = $$keys[key];
-        if(key in object) {
-            object[realColumnName] = object[key];
-            if(key !== realColumnName) {
-                delete object[key];
-            }
+        if(!object[key]) {
+            continue;
+        }
+        const realKey = key in $$keys ? $$keys[key] : key;
+        newObject[realKey] = object[key];
+        if(key !== realKey) {
+            delete newObject[key];
         }
     }
-    return object;
+    return newObject;
 }
 
 /**
