@@ -1,6 +1,6 @@
 {
     "name": "@kinshipjs/lucia",
-    "version": "0.0.18-development",
+    "version": "0.0.19-development",
     "homepage": "https://github.com/kinshipjs/lucia",
     "repository": {
         "type": "git",
@@ -27,11 +27,11 @@
     "author": "Travis Zuleger",
     "license": "(MIT OR Apache-2.0)",
     "dependencies": {
-        "@kinshipjs/core": "^0.0.26-development",
+        "@kinshipjs/core": "^0.0.29-development",
         "lucia": "^2.4.0"
     },
     "devDependencies": {
-        "@kinshipjs/json": "^0.0.5-development",
+        "@kinshipjs/json": "^0.0.6-development",
         "@lucia-auth/adapter-test": "^4.1.0",
         "@types/node": "^20.3.1",
         "crypto": "^1.0.1",

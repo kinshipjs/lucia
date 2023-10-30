@@ -190,7 +190,7 @@ users.onSuccess(onSuccess);
 sessions.onSuccess(onSuccess);
 keys.onSuccess(onSuccess);
 
-const adapter = kinshipLuciaAdapter(keys, sessions, users, {
+const adapter = kinshipLuciaAdapter(connection, keys, sessions, users, {
     auth_key: m => ({
         id: m.Id,
         hashed_password: m.HashedPassword,

@@ -76,6 +76,8 @@ const proxy = new Proxy(/** @type {any} */ ({}), {
  * Model represented by the `auth_session` context.
  * @template {object} TKey
  * Model represented by the `auth_key` context.
+ * @param {import('@kinshipjs/core/adapter').KinshipAdapterConnection} connection
+ * The connection that was used to instantiate `auth_key`, `auth_session`, and `auth_user`. (Used to execute transactions)
  * @param {import('@kinshipjs/core').KinshipContext<TKey>} auth_key
  * Context representing the table connected to your users.
  * @param {import('@kinshipjs/core').KinshipContext<TSession>} auth_session
@@ -93,7 +95,7 @@ const proxy = new Proxy(/** @type {any} */ ({}), {
  * @returns {(E: import('lucia').LuciaErrorConstructor) => import('lucia').Adapter}
  * `lucia-auth` adapter for usage within `lucia`.
  */
-export const adapter = (auth_key, auth_session, auth_user, { 
+export const adapter = (connection, auth_key, auth_session, auth_user, { 
     auth_user: $auth_user, 
     auth_session: $auth_session, 
     auth_key: $auth_key 
@@ -183,7 +185,7 @@ export const adapter = (auth_key, auth_session, auth_user, {
         },
         setUser: async (user, key) => {
             try {
-                await transaction({ auth_key, auth_user }).execute(async ({ auth_key, auth_user }) => {
+                await transaction(connection).execute(async () => {
                     await auth_user.insert(mapUser(user, $$auth_user));
                     if(key) {
                         await auth_key.insert(mapKey(key, $$auth_key));
