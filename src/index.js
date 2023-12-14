@@ -185,13 +185,15 @@ export const adapter = (connection, auth_key, auth_session, auth_user, {
         },
         setUser: async (user, key) => {
             try {
-                await transaction(connection).execute(async () => {
-                    await auth_user.insert(mapUser(user, $$auth_user));
+                console.log({key});
+                await transaction(connection).execute(async (tnx) => {
+                    await auth_user.using(tnx).insert(mapUser(user, $$auth_user));
                     if(key) {
-                        await auth_key.insert(mapKey(key, $$auth_key));
+                        await auth_key.using(tnx).insert(mapKey(key, $$auth_key));
                     }
                 });
             } catch(err) {
+                console.log(err);
                 throw new LuciaError('AUTH_DUPLICATE_KEY_ID');
             }
         },
