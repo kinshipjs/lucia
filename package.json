@@ -1,6 +1,6 @@
 {
     "name": "@kinshipjs/lucia",
-    "version": "0.0.19-development",
+    "version": "0.0.21-development",
     "homepage": "https://github.com/kinshipjs/lucia",
     "repository": {
         "type": "git",
@@ -28,7 +28,7 @@
     "license": "(MIT OR Apache-2.0)",
     "dependencies": {
         "@kinshipjs/core": "^0.0.45-development",
-        "lucia": "^2.4.0"
+        "lucia": "^2.7.3"
     },
     "devDependencies": {
         "@kinshipjs/json": "^0.0.6-development",
