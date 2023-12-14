@@ -183,7 +183,6 @@ const sessions = new KinshipContext(connection, "Session", { disableSafeDeleteMo
 const keys = new KinshipContext(connection, "Key", { disableSafeDeleteMode: true, disableSafeUpdateMode: false });
 
 function onSuccess({cmdRaw, resultsInSqlRowFormat}) {
-    console.log(resultsInSqlRowFormat);
 }
 
 users.onSuccess(onSuccess);

@@ -167,8 +167,8 @@ export const adapter = (connection, auth_key, auth_session, auth_user, {
         updateSession: async (sessionId, partialSession) => {
             try {
                 await auth_session
-                        .where(m => (/** @type {any} */(m))[$$auth_session.id].equals(sessionId)
-                    ).update(() => mapSession(partialSession, $$auth_session));
+                    .where(m => (/** @type {any} */(m))[$$auth_session.id].equals(sessionId))
+                    .update(() => mapSession(partialSession, $$auth_session));
             } catch(err) {
                 throw new LuciaError('AUTH_INVALID_SESSION_ID');
             }
@@ -177,15 +177,13 @@ export const adapter = (connection, auth_key, auth_session, auth_user, {
         // User adapter
         getUser: async (userId) => {
             const [user] = (await auth_user
-                .where(m => (/** @type {any} */(m))[$$auth_user.id]
-                    // @ts-ignore .where behaves strangely on untyped contexts.
-                    .equals(userId))
-                .select()).map(/** @type {any} */ ($auth_user));
+                    .where(m => (/** @type {any} */(m))[$$auth_user.id].equals(userId))
+                    .select())
+                .map(/** @type {any} */ ($auth_user));
             return user ?? null;
         },
         setUser: async (user, key) => {
             try {
-                console.log({key});
                 await transaction(connection).execute(async (tnx) => {
                     await auth_user.using(tnx).insert(mapUser(user, $$auth_user));
                     if(key) {
@@ -193,40 +191,33 @@ export const adapter = (connection, auth_key, auth_session, auth_user, {
                     }
                 });
             } catch(err) {
-                console.log(err);
                 throw new LuciaError('AUTH_DUPLICATE_KEY_ID');
             }
         },
         updateUser: async (userId, partialUser) => {
             try {
-                await auth_user
-                        .where(m => (/** @type {any} */(m))[$$auth_session.id].equals(userId)
-                    ).update(() => mapUser(partialUser, $$auth_user));
+                const n = await auth_user
+                    .where(m => (/** @type {any} */(m))[$$auth_user.id].equals(userId))
+                    .update(() => mapUser(partialUser, $$auth_user));
             } catch(err) {
                 throw new LuciaError('AUTH_INVALID_USER_ID');
             }
         },
         deleteUser: async (userId) => {
             await auth_user
-                .where(m => (/** @type {any} */(m))[$$auth_user.id]
-                    // @ts-ignore .where behaves strangely on untyped contexts.
-                    .equals(userId))
+                .where(m => (/** @type {any} */(m))[$$auth_user.id].equals(userId))
                 .delete();
         },
         
         getKey: async (keyId) => {
             const [key] = (await auth_key
-                .where(m => (/** @type {any} */(m))[$$auth_key.id]
-                    // @ts-ignore .where behaves strangely on untyped contexts.
-                    .equals(keyId))
+                .where(m => (/** @type {any} */(m))[$$auth_key.id].equals(keyId))
                 .select()).map(/** @type {any} */ ($auth_key));
             return key ?? null;
         },
         getKeysByUserId: async (userId) => {
             const keys = (await auth_key
-                .where(m => (/** @type {any} */(m))[$$auth_key.user_id]
-                    // @ts-ignore .where behaves strangely on untyped contexts.
-                    .equals(userId))
+                .where(m => (/** @type {any} */(m))[$$auth_key.user_id].equals(userId))
                 .select()).map(/** @type {any} */ ($auth_key));
             return keys ?? null;
         },
@@ -241,23 +232,17 @@ export const adapter = (connection, auth_key, auth_session, auth_user, {
         },
         updateKey: async (keyId, keySchema) => {
             await auth_key
-                .where(m => (/** @type {any} */(m))[$$auth_key.id]
-                    // @ts-ignore .where behaves strangely on untyped contexts.
-                    .equals(keyId))
+                .where(m => (/** @type {any} */(m))[$$auth_key.id].equals(keyId))
                 .update(() => mapKey(keySchema, $$auth_key));
         },
         deleteKey: async (keyId) => {
             await auth_key
-                .where(m => (/** @type {any} */(m))[$$auth_key.id]
-                    // @ts-ignore .where behaves strangely on untyped contexts.
-                    .equals(keyId))
+                .where(m => (/** @type {any} */(m))[$$auth_key.id].equals(keyId))
                 .delete();
         },
         deleteKeysByUserId: async (userId) => {
             await auth_key
-                .where(m => (/** @type {any} */(m))[$$auth_key.user_id]
-                    // @ts-ignore .where behaves strangely on untyped contexts.
-                    .equals(userId))
+                .where(m => (/** @type {any} */(m))[$$auth_key.user_id].equals(userId))
                 .delete();
         }
     });
