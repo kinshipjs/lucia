@@ -1,16 +1,16 @@
-![myorm-logo-text-description-640x283](https://github.com/myorm/myorm/assets/55516053/011d0513-48b5-44bc-aa1b-06860eeb7517)
+![Kinship Logo Title & Description](https://raw.githubusercontent.com/kinshipjs/branding/main/kinship-logo-with-description.png)
 
-# `MyORM` Lucia Auth adapter
+# `Kinship` Lucia Auth adapter
 
-The `MyORM` Lucia Auth adapter serves as an adapter for [Lucia Auth](https://lucia-auth.com) to provide an easy way to connect authentication schemes to your `MyORM` contexts.
+The `Kinship` Lucia Auth adapter serves as an adapter for [Lucia Auth](https://lucia-auth.com) to provide an easy way to connect authentication schemes to your `Kinship` contexts.
 
 ## Getting Started
 
 Run the following commands.
 
 ```
-npm i @myorm/lucia
-npm i @myorm/mysql-adapter # or whichever adapter you prefer to use.
+npm i @kinshipjs/lucia
+npm i @kinshipjs/mysql2 # or whichever adapter you prefer to use.
 ```
 
 Create your database:
@@ -119,12 +119,12 @@ export interface xUserRole {
 }
 ```
 
-Import `@myorm/myorm`, `@myorm/mysql-adapter`, and `@myorm/lucia`.
+Import `@kinshipjs/core`, `@kinshipjs/mysql2`, and `@kinshipjs/lucia`.
 
 ```ts
-import { MyORMContext } from '@myorm/myorm';
-import { adapter, createMySql2Pool } from '@myorm/mysql-adapter';
-import { adapter as luciaAdapter } from '@myorm/lucia';
+import { KinshipContext } from '@kinshipjs/core';
+import { adapter, createMySql2Pool } from '@kinshipjs/mysql2';
+import { adapter as luciaAdapter } from '@kinshipjs/lucia';
 ```
 
 Configure your connection to your database.
@@ -142,14 +142,14 @@ const connection = adapter(pool);
 
 ```
 
-Construct your `MyORMContext` objects.
+Construct your `KinshipContext` objects.
 
 ```ts
-const users = new MyORMContext<User>(connection, "User");
-const userRoles = new MyORMContext<UserRoleXref>(connection, "UserRoleXref");
-const roles = new MyORMContext<Role>(connection, "Role");
-const keys = new MyORMContext<AuthKey>(connection, "AuthKey");
-const sessions = new MyORMContext<AuthSession>(connection, "AuthSession");
+const users = new KinshipContext<User>(connection, "User");
+const userRoles = new KinshipContext<UserRoleXref>(connection, "UserRoleXref");
+const roles = new KinshipContext<Role>(connection, "Role");
+const keys = new KinshipContext<AuthKey>(connection, "AuthKey");
+const sessions = new KinshipContext<AuthSession>(connection, "AuthSession");
 ```
 
 Configure relationships (if any exist)
