@@ -27,7 +27,7 @@
     "author": "Travis Zuleger",
     "license": "(MIT OR Apache-2.0)",
     "dependencies": {
-        "@kinshipjs/core": "^0.1.6",
+        "@kinshipjs/core": "^0.1.8",
         "lucia": "^2.7.3"
     },
     "devDependencies": {
