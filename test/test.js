@@ -16,138 +16,88 @@ const connection = jsonAdapter({
     $schema: {
         User: {
             Id: {
-                table: 'User',
-                field: 'Id',
-                alias: '',
                 isPrimary: true,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: false,
                 isUnique: true,
                 datatype: 'string',
                 defaultValue: () => undefined,
-                commandAlias: ''
             },
             Username: {
-                table: 'User',
-                field: 'Username',
-                alias: '',
                 isPrimary: false,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: false,
                 isUnique: false,
                 datatype: 'string',
                 defaultValue: () => undefined,
-                commandAlias: ''
             },
         },
         Key: {
             Id: {
-                table: 'Key',
-                field: 'Id',
-                alias: '',
                 isPrimary: true,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: false,
                 isUnique: true,
                 datatype: 'string',
                 defaultValue: () => undefined,
-                commandAlias: ''
             },
             UserId: {
-                table: 'Key',
-                field: 'UserId',
-                alias: '',
                 isPrimary: false,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: false,
                 isUnique: false,
                 datatype: 'string',
                 defaultValue: () => undefined,
-                commandAlias: ''
             },
             HashedPassword: {
-                table: 'Key',
-                field: 'HashedPassword',
-                alias: '',
                 isPrimary: false,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: true,
                 isUnique: false,
                 datatype: 'string',
                 defaultValue: () => undefined,
-                commandAlias: ''
             }
         },
         Session: {
             Id: {
-                table: 'Session',
-                field: 'Id',
-                alias: '',
                 isPrimary: true,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: false,
                 isUnique: false,
                 datatype: 'string',
                 defaultValue: () => undefined,
-                commandAlias: ''
             },
             UserId: {
-                table: 'Session',
-                field: 'UserId',
-                alias: '',
                 isPrimary: false,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: false,
                 isUnique: false,
                 datatype: 'string',
                 defaultValue: () => undefined,
-                commandAlias: ''
             },
             IdleExpires: {
-                table: 'Session',
-                field: 'IdleExpires',
-                alias: '',
                 isPrimary: false,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: false,
                 isUnique: false,
                 datatype: 'int',
                 defaultValue: () => undefined,
-                commandAlias: ''
             },
             ActiveExpires: {
-                table: 'Session',
-                field: 'ActiveExpires',
-                alias: '',
                 isPrimary: false,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: false,
                 isUnique: false,
                 datatype: 'int',
                 defaultValue: () => undefined,
-                commandAlias: ''
             },
             Country: {
-                table: 'Session',
-                field: 'Country',
-                alias: '',
                 isPrimary: false,
                 isIdentity: false,
-                isVirtual: false,
                 isNullable: true,
                 isUnique: false,
                 datatype: 'string',
                 defaultValue: () => undefined,
-                commandAlias: ''
             }
         }
     }
@@ -189,7 +139,7 @@ users.onSuccess(onSuccess);
 sessions.onSuccess(onSuccess);
 keys.onSuccess(onSuccess);
 
-const adapter = kinshipLuciaAdapter(connection, keys, sessions, users, {
+const adapter = kinshipLuciaAdapter(keys, sessions, users, {
     auth_key: m => ({
         id: m.Id,
         hashed_password: m.HashedPassword,

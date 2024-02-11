@@ -1,5 +1,4 @@
 //@ts-check
-import { transaction } from '@kinshipjs/core';
 import { LuciaError } from 'lucia';
 
 /**
@@ -76,8 +75,6 @@ const proxy = new Proxy(/** @type {any} */ ({}), {
  * Model represented by the `auth_session` context.
  * @template {object} TKey
  * Model represented by the `auth_key` context.
- * @param {import('@kinshipjs/core/adapter').KinshipAdapterConnection} connection
- * The connection that was used to instantiate `auth_key`, `auth_session`, and `auth_user`. (Used to execute transactions)
  * @param {import('@kinshipjs/core').KinshipContext<TKey>} auth_key
  * Context representing the table connected to your users.
  * @param {import('@kinshipjs/core').KinshipContext<TSession>} auth_session
@@ -95,7 +92,7 @@ const proxy = new Proxy(/** @type {any} */ ({}), {
  * @returns {(E: import('lucia').LuciaErrorConstructor) => import('lucia').Adapter}
  * `lucia-auth` adapter for usage within `lucia`.
  */
-export const adapter = (connection, auth_key, auth_session, auth_user, { 
+export const adapter = (auth_key, auth_session, auth_user, { 
     auth_user: $auth_user, 
     auth_session: $auth_session, 
     auth_key: $auth_key 
@@ -183,14 +180,22 @@ export const adapter = (connection, auth_key, auth_session, auth_user, {
             return user ?? null;
         },
         setUser: async (user, key) => {
+            /** @type {TUser=} */
+            let insertedUser;
+            /** @type {TKey=} */
+            let insertedKey;
             try {
-                await transaction(connection).execute(async (tnx) => {
-                    await auth_user.using(tnx).insert(mapUser(user, $$auth_user));
-                    if(key) {
-                        await auth_key.using(tnx).insert(mapKey(key, $$auth_key));
-                    }
-                });
+                [insertedUser] = await auth_user.insert(mapUser(user, $$auth_user));
+                if(key) {
+                    [insertedKey] = await auth_key.insert(mapKey(key, $$auth_key));
+                }
             } catch(err) {
+                if(insertedUser) {
+                    await auth_user.delete(insertedUser);
+                }
+                if(insertedKey) {
+                    await auth_key.delete(insertedKey);
+                }
                 throw new LuciaError('AUTH_DUPLICATE_KEY_ID');
             }
         },
@@ -223,7 +228,6 @@ export const adapter = (connection, auth_key, auth_session, auth_user, {
         },
         setKey: async (key) => {
             await userIdCheck(auth_user, $$auth_user.id, key.user_id);
-            
             try {
                 await auth_key.insert(mapKey(key, $$auth_key));
             } catch(err) {
